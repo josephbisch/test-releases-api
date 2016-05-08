@@ -36,6 +36,18 @@ def check_status(res, j):
     return 0
 
 
+def create_release(owner, repo, tag, token):
+    url = urljoin(GITHUB_API, '/'.join(['repos', owner, repo, 'releases']))
+    headers = {'Authorization': token}
+    data = {'tag_name': tag, 'name': tag, 'body': 'winetricks - %s' % tag}
+    res = requests.post(url, auth=(owner, token), data=json.dumps(data), headers=headers)
+
+    j = json.loads(res.text)
+    if check_status(res, j):
+        return 1
+    return 0
+
+
 def upload_asset(path, owner, repo, tag):
     token = os.environ['GITHUB_TOKEN']
 
@@ -45,7 +57,13 @@ def upload_asset(path, owner, repo, tag):
 
     j = json.loads(res.text)
     if check_status(res, j):
-        return
+        # release must not exist, creating release from tag
+        if create_release(owner, repo, tag, token):
+            return
+        else:
+            # Need to start over with uploading now that release is created
+            upload_asset(path, owner, repo, tag)
+            return
     upload_url = j['upload_url']
     upload_url = upload_url.split('{')[0]
 
