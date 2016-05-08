@@ -59,11 +59,11 @@ def upload_asset(path, owner, repo, tag):
     if check_status(res, j):
         # release must not exist, creating release from tag
         if create_release(owner, repo, tag, token):
-            return
+            return 0
         else:
             # Need to start over with uploading now that release is created
-            upload_asset(path, owner, repo, tag)
-            return
+            # Return 1 to indicate we need to run upload_asset again
+            return 1
     upload_url = j['upload_url']
     upload_url = upload_url.split('{')[0]
 
@@ -80,8 +80,9 @@ def upload_asset(path, owner, repo, tag):
 
     j = json.loads(res.text)
     if check_status(res, j):
-        return
+        return 0
     print('SUCCESS: %s uploaded' % fname)
+    return 0
 
 if __name__ == '__main__':
     path = sys.argv[1]
@@ -90,4 +91,6 @@ if __name__ == '__main__':
     tag = sys.argv[4]
     if not os.path.isabs(path):
         path = os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
-    upload_asset(path, owner, repo, tag)
+    ret = 1  # Run upload_asset at least once.
+    while ret:
+        ret = upload_asset(path, owner, repo, tag)
