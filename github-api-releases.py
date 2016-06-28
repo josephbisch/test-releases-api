@@ -25,9 +25,6 @@ from urllib.parse import urljoin
 
 GITHUB_API = 'https://api.github.com'
 
-mime = magic.Magic(mime=True)
-
-
 def check_status(res, j):
     if res.status_code >= 400:
         msg = j.get('message', 'UNDEFINED')
@@ -70,7 +67,7 @@ def upload_asset(path, owner, repo, tag):
     fname = ntpath.basename(path)
     with open(path) as f:
         contents = f.read()
-    content_type = mime.from_file(path)
+    content_type = magic.from_file(path)
 
     headers = {'Content-Type': content_type, 'Authorization': token}
     params = {'name': fname}
